@@ -1,0 +1,17 @@
+{
+  "id": "./",
+  "name": "Order to WhatsApp",
+  "short_name": "Orders",
+  "description": "Create retailer orders and send them to a WhatsApp group.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#E9EDF1",
+  "theme_color": "#16233B",
+  "icons": [
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}

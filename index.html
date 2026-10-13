@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Order to WhatsApp</title>
+<meta name="theme-color" content="#16233B">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Orders">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#E9EDF1; --paper:#FFFFFF; --ink:#16233B; --muted:#5E6B80; --line:#D3DAE3;
+    --accent:#16233B; --send:#128C4A; --send-d:#0E6F3B; --bubble:#D8F1CB; --warn:#B4231A;
+    --radius:10px;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 "Schibsted Grotesk",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding-bottom:calc(84px + env(safe-area-inset-bottom))}
+  h1{font-size:1.5rem;margin:0;letter-spacing:-.01em}
+  h2{font-size:1.05rem;margin:0 0 .75rem}
+  header{padding:calc(20px + env(safe-area-inset-top)) 16px 8px;max-width:1040px;margin:0 auto}
+  header p{margin:.25rem 0 0;color:var(--muted);font-size:.95rem}
+  main{max-width:1040px;margin:0 auto;padding:8px 16px 24px;display:grid;gap:16px}
+  main > .card{margin:0}
+  @media(min-width:900px){
+    main{grid-template-columns:1.25fr 1fr;grid-template-areas:"order prev" "saved prev";align-items:start}
+    .area-order{grid-area:order}
+    .area-saved{grid-area:saved}
+    .area-prev{grid-area:prev;position:sticky;top:12px}
+    body{padding-bottom:24px}
+    .mobilebar{display:none!important}
+  }
+  .card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:16px}
+  label{display:block;font-weight:500;font-size:.9rem;margin-bottom:4px}
+  label small{font-weight:400;color:var(--muted)}
+  input,textarea,select{width:100%;font:inherit;color:inherit;background:#fff;border:1px solid var(--line);border-radius:8px;padding:10px 11px;min-height:44px}
+  textarea{min-height:84px;resize:vertical}
+  input:focus,textarea:focus,button:focus-visible,summary:focus-visible{outline:3px solid #7FA6E8;outline-offset:1px}
+  .field+.field{margin-top:12px}
+  .head,.row{display:grid;grid-template-columns:1fr 62px 84px 40px;gap:8px;align-items:center}
+  .head{font-size:.8rem;color:var(--muted);padding:0 0 4px}
+  .row{margin-bottom:8px}
+  .row input{padding:9px 8px}
+  .row input[type=number]{text-align:right;-moz-appearance:textfield}
+  .row input::-webkit-outer-spin-button,.row input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--ink);min-height:44px;padding:0 14px}
+  button:hover{background:#F3F6F9}
+  .icon{padding:0;width:40px;color:var(--muted);font-size:1.2rem}
+  .icon:hover{color:var(--warn)}
+  .primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .primary:hover{background:#0E1830}
+  .send{background:var(--send);border-color:var(--send);color:#fff;font-weight:700}
+  .send:hover{background:var(--send-d)}
+  .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .check{display:flex;gap:10px;align-items:center;margin-top:12px;font-size:.95rem}
+  .check input{width:20px;height:20px;min-height:0}
+  .check label{margin:0;font-weight:400}
+  .bubble-wrap{background:#E5DDD5;border-radius:var(--radius);padding:16px;border:1px solid var(--line)}
+  .bubble{background:var(--bubble);border-radius:10px 10px 2px 10px;padding:10px 12px;white-space:pre-wrap;word-break:break-word;font-size:.95rem;min-height:3rem;box-shadow:0 1px 1px rgba(0,0,0,.12);margin-left:auto;max-width:100%}
+  .bubble.empty{color:#6B7A66;font-style:italic}
+  .hint{color:var(--muted);font-size:.85rem;margin:8px 0 0}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 16px;color:var(--muted);font-size:.9rem}
+  .chip{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:999px;background:#F6F8FA;font-size:.9rem;color:var(--ink)}
+  .chip button{border:0;background:none;min-height:34px;padding:0 12px;border-radius:999px}
+  .chip .x{display:none;color:var(--muted);padding:0 10px 0 2px}
+  .chip .x:hover{color:var(--warn)}
+  .editing .chip .x{display:inline-block}
+  .editing .chip .use{padding-right:4px}
+  details{border-top:1px solid var(--line);padding-top:12px;margin-top:12px}
+  summary{cursor:pointer;font-weight:700;min-height:32px}
+  .hist{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+  .hist:last-child{border-bottom:0}
+  .hist small{color:var(--muted);display:block}
+  .hist .btns{display:flex;gap:6px}
+  .hist button{min-height:36px;padding:0 10px}
+  .mobilebar{position:fixed;left:0;right:0;bottom:0;background:var(--paper);border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom));display:flex;gap:8px}
+  .mobilebar .send{flex:1}
+  .toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:8px;font-size:.92rem;opacity:0;pointer-events:none;transition:opacity .2s;z-index:10;max-width:90vw;text-align:center}
+  .toast.on{opacity:1}
+  .warn{color:var(--warn);font-size:.88rem;margin:0 0 12px}
+  .install{max-width:1040px;margin:8px auto 0;padding:0 16px}
+  .install .box{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+  .install p{margin:0;font-size:.92rem}
+  .overlay{position:fixed;inset:0;background:rgba(22,35,59,.55);display:flex;align-items:flex-end;justify-content:center;z-index:20;padding:12px}
+  .overlay[hidden]{display:none}
+  .sheet{background:#fff;border-radius:var(--radius);padding:16px;width:100%;max-width:520px;max-height:90vh;overflow:auto}
+  @media(prefers-reduced-motion:reduce){.toast{transition:none}}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Order to WhatsApp</h1>
+  <p>Fill in the retailer and items, check the message, then send it to your group.</p>
+</header>
+
+<div class="install" id="installBox" hidden>
+  <div class="box">
+    <p id="installText">Install this app on your home screen to open it like any other app.</p>
+    <button type="button" class="primary" id="installBtn" hidden>Install app</button>
+  </div>
+</div>
+
+<main>
+  <section class="card area-order" aria-labelledby="h-order">
+    <h2 id="h-order">Order</h2>
+    <p class="warn" id="storageWarn" hidden>Saving is not available in this view, so details will be lost when you close the page. Open the app from its web address or install it to keep them.</p>
+
+    <div class="field">
+      <label for="retailer">Retailer / store</label>
+      <input id="retailer" list="retailerList" placeholder="e.g. Naresh Garnal store" autocomplete="off">
+      <datalist id="retailerList"></datalist>
+    </div>
+
+    <div class="field">
+      <div class="head" aria-hidden="true"><span>Item</span><span>Qty</span><span>Price</span><span></span></div>
+      <div id="lines"></div>
+      <button type="button" id="addLine">+ Add item</button>
+      <datalist id="itemList"></datalist>
+    </div>
+
+    <div class="field">
+      <label for="notes">Additional text</label>
+      <textarea id="notes" placeholder="e.g. Deliver by Friday. Payment on delivery."></textarea>
+    </div>
+
+    <div class="check">
+      <input type="checkbox" id="showTotals">
+      <label for="showTotals">Show line amounts and total (quantity × price)</label>
+    </div>
+  </section>
+
+  <section class="card area-prev" aria-labelledby="h-prev">
+    <h2 id="h-prev">Message preview</h2>
+    <div class="bubble-wrap"><div class="bubble" id="preview" aria-live="polite"></div></div>
+    <div class="actions">
+      <button type="button" class="send" id="sendBtn">Send on WhatsApp</button>
+      <button type="button" id="copyBtn">Copy message</button>
+      <button type="button" id="groupBtn" hidden>Copy &amp; open group</button>
+    </div>
+    <p class="hint">WhatsApp opens with the message ready. Choose your group there and press send.</p>
+    <div class="actions"><button type="button" id="newBtn">Start new order</button></div>
+  </section>
+
+  <section class="card area-saved" id="savedCard" aria-labelledby="h-saved">
+    <h2 id="h-saved">Saved details</h2>
+    <p class="hint" style="margin-top:0">Retailers and items save automatically when you send or copy an order. Search, then tap one to use it.</p>
+
+    <div class="field">
+      <label for="retSearch">Retailers <small id="retCount"></small></label>
+      <input id="retSearch" type="search" placeholder="Search retailers" autocomplete="off">
+      <div class="chips" id="retailerChips"></div>
+    </div>
+
+    <div class="field">
+      <label for="itemSearch">Items <small id="itemCount"></small></label>
+      <input id="itemSearch" type="search" placeholder="Search items" autocomplete="off">
+      <div class="chips" id="itemChips"></div>
+    </div>
+
+    <div class="check" style="margin-top:0">
+      <input type="checkbox" id="editMode">
+      <label for="editMode">Show delete buttons</label>
+    </div>
+
+    <details>
+      <summary>Add many retailers and items at once</summary>
+      <div class="field">
+        <label for="bulkRet">Retailers <small>(one per line)</small></label>
+        <textarea id="bulkRet" placeholder="Naresh Garnal store&#10;Sharma Traders"></textarea>
+      </div>
+      <div class="field">
+        <label for="bulkItems">Items <small>(one per line, price after a comma or tab is optional)</small></label>
+        <textarea id="bulkItems" placeholder="1Ltr, 950&#10;5Ltr, 3202&#10;Veto kettil 1.5 Ltr., 485"></textarea>
+      </div>
+      <p class="hint">You can paste two columns straight from Excel or Google Sheets.</p>
+      <div class="actions"><button type="button" class="primary" id="bulkBtn">Add to saved details</button></div>
+    </details>
+
+    <details>
+      <summary>Message settings</summary>
+      <div class="field">
+        <label for="sentBy">Your name <small>(added at the end of the message)</small></label>
+        <input id="sentBy" placeholder="Optional" autocomplete="name">
+      </div>
+      <div class="field">
+        <label for="groupLink">WhatsApp group invite link</label>
+        <input id="groupLink" inputmode="url" placeholder="https://chat.whatsapp.com/…" autocomplete="off">
+        <p class="hint">Optional. Adds a "Copy &amp; open group" button.</p>
+      </div>
+    </details>
+
+    <details id="histDetails">
+      <summary>Order history <small id="histCount"></small></summary>
+      <div class="field" style="margin-top:8px">
+        <input id="histSearch" type="search" placeholder="Search by retailer" autocomplete="off" aria-label="Search order history by retailer">
+      </div>
+      <div id="history"></div>
+      <div class="actions">
+        <button type="button" id="histMore" hidden>Show more</button>
+        <button type="button" id="histTrim">Delete orders older than 12 months</button>
+      </div>
+    </details>
+
+    <details>
+      <summary>Backup</summary>
+      <p class="hint">Your details live only on this device. Download a backup now and then, and before you clear browser data or change phones.</p>
+      <div class="actions">
+        <button type="button" id="exportBtn">Download backup</button>
+        <button type="button" id="importBtn">Restore backup</button>
+        <input type="file" id="importFile" accept="application/json" hidden>
+      </div>
+    </details>
+  </section>
+</main>
+
+<div class="mobilebar">
+  <button type="button" class="send" id="sendBtn2">Send on WhatsApp</button>
+  <button type="button" id="copyBtn2">Copy</button>
+</div>
+<div class="overlay" id="manual" hidden role="dialog" aria-modal="true" aria-labelledby="manualT">
+  <div class="sheet">
+    <h2 id="manualT">Copy the message</h2>
+    <p class="hint" style="margin-top:0">Your phone blocked automatic copying. Tap Select all, then choose Copy from the menu that appears.</p>
+    <textarea id="manualText" readonly rows="10" style="margin-top:10px"></textarea>
+    <div class="actions"><button type="button" class="primary" id="manualSel">Select all</button><button type="button" id="manualClose">Close</button></div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var CHIP_LIMIT = 12, HIST_PAGE = 20;
+
+  // ---------- small settings storage (retailers, items, draft) ----------
+  var mem = {}, storageOk = true;
+  try { localStorage.setItem('__t','1'); localStorage.removeItem('__t'); } catch(e){ storageOk = false; }
+  function get(k, d){
+    try { if(storageOk){ var v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } } catch(e){}
+    return k in mem ? mem[k] : d;
+  }
+  function set(k, v){
+    mem[k] = v;
+    try { if(storageOk) localStorage.setItem(k, JSON.stringify(v)); } catch(e){ storageOk = false; }
+  }
+  var SETTING_KEYS = ['ord:draft','ord:retailers','ord:items','ord:sentby','ord:group'];
+
+  // ---------- order history (IndexedDB: handles many thousands of orders without slowing down) ----------
+  var db = null, histMem = [];
+  function openDB(){
+    return new Promise(function(res){
+      try {
+        var r = indexedDB.open('order-app', 1);
+        r.onupgradeneeded = function(){
+          var st = r.result.createObjectStore('history', {keyPath:'id'});
+          st.createIndex('at', 'at');
+        };
+        r.onsuccess = function(){ res(r.result); };
+        r.onerror = r.onblocked = function(){ res(null); };
+      } catch(e){ res(null); }
+    });
+  }
+  function tx(mode){ return db.transaction('history', mode).objectStore('history'); }
+  function done(req){ return new Promise(function(res){ req.onsuccess = function(){ res(req.result); }; req.onerror = function(){ res(null); }; }); }
+  function hPut(entry){
+    if(!db){ histMem.unshift(entry); return Promise.resolve(); }
+    return done(tx('readwrite').put(entry));
+  }
+  function hDelete(id){
+    if(!db){ histMem = histMem.filter(function(x){ return x.id !== id; }); return Promise.resolve(); }
+    return done(tx('readwrite').delete(id));
+  }
+  function hCount(){
+    if(!db) return Promise.resolve(histMem.length);
+    return done(tx('readonly').count()).then(function(n){ return n || 0; });
+  }
+  function hAll(){
+    if(!db) return Promise.resolve(histMem.slice());
+    return done(tx('readonly').getAll()).then(function(a){ return a || []; });
+  }
+  function hQuery(filter, limit){
+    var f = filter.trim().toLowerCase();
+    function match(v){ return !f || (v.retailer || '').toLowerCase().indexOf(f) > -1; }
+    if(!db){
+      var a = histMem.filter(match);
+      return Promise.resolve({items:a.slice(0, limit), more:a.length > limit});
+    }
+    return new Promise(function(res){
+      var out = [];
+      var req = tx('readonly').index('at').openCursor(null, 'prev');
+      req.onsuccess = function(){
+        var c = req.result;
+        if(!c || out.length > limit){ res({items:out.slice(0, limit), more:out.length > limit}); return; }
+        if(match(c.value)) out.push(c.value);
+        c.continue();
+      };
+      req.onerror = function(){ res({items:[], more:false}); };
+    });
+  }
+  function hTrimOlder(ms){
+    var cutoff = Date.now() - ms;
+    if(!db){
+      var before = histMem.length;
+      histMem = histMem.filter(function(x){ return x.at >= cutoff; });
+      return Promise.resolve(before - histMem.length);
+    }
+    return new Promise(function(res){
+      var n = 0, store = tx('readwrite');
+      var req = store.index('at').openCursor(IDBKeyRange.upperBound(cutoff, true));
+      req.onsuccess = function(){
+        var c = req.result;
+        if(!c){ res(n); return; }
+        c.delete(); n++; c.continue();
+      };
+      req.onerror = function(){ res(n); };
+    });
+  }
+
+  // ---------- state ----------
+  function uid(){ return Math.random().toString(36).slice(2,9); }
+  function blankLine(){ return {id:uid(), item:'', qty:'', price:''}; }
+  function blankOrder(){ return {retailer:'', notes:'', showTotals:true, lines:[blankLine(),blankLine(),blankLine()]}; }
+  var S = get('ord:draft', null) || blankOrder();
+  if(!S.lines || !S.lines.length) S.lines = [blankLine()];
+  var retailers = get('ord:retailers', []);
+  var items = get('ord:items', []);       // {name, price}
+  var histLimit = HIST_PAGE;
+
+  // ---------- message ----------
+  function num(v){ var n = parseFloat(String(v).replace(/,/g,'')); return isNaN(n) ? 0 : n; }
+  function money(n){ return '\u20B9' + n.toLocaleString('en-IN', {maximumFractionDigits:2}); }
+  function buildText(){
+    var rows = [], total = 0, qtyTotal = 0, unpriced = 0;
+    S.lines.forEach(function(l){
+      var name = l.item.trim(); if(!name) return;
+      var qs = String(l.qty).trim() || '1', ps = String(l.price).trim();
+      var q = num(qs), p = num(ps);
+      var line = (rows.length + 1) + '. ' + name + ' \u2014 ';
+      if(ps){
+        line += qs + ' \u00D7 ' + money(p);
+        if(S.showTotals) line += ' = ' + money(q * p);
+        total += q * p;
+      } else { line += 'Qty ' + qs; unpriced++; }
+      qtyTotal += q;
+      rows.push(line);
+    });
+    var retailer = S.retailer.trim(), notes = S.notes.trim();
+    if(!rows.length && !retailer) return '';
+    var date = new Date().toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'numeric'});
+    var out = ['*ORDER REQUEST*', 'Date: ' + date];
+    if(retailer) out.push('*Retailer:* ' + retailer);
+    if(rows.length){
+      out.push('', '*Order details*');
+      out = out.concat(rows);
+      out.push('', '*Total items:* ' + rows.length + '  |  *Total qty:* ' + qtyTotal);
+      if(S.showTotals && total > 0){
+        out.push('*Total amount:* ' + money(total) + (unpriced ? ' (excludes items without a price)' : ''));
+      }
+    }
+    if(notes) out.push('', '*Notes*', notes);
+    var by = $('sentBy').value.trim();
+    out.push('', 'Thank you.' + (by ? '\n' + by : ''));
+    return out.join('\n');
+  }
+  function hasContent(){
+    return S.retailer.trim() || S.lines.some(function(l){ return l.item.trim(); });
+  }
+  function renderRich(el, text){
+    el.textContent = '';
+    text.split('\n').forEach(function(line, i){
+      if(i) el.appendChild(document.createElement('br'));
+      line.split(/(\*[^*]+\*)/).forEach(function(part){
+        if(/^\*[^*]+\*$/.test(part)){
+          var b = document.createElement('strong'); b.textContent = part.slice(1, -1); el.appendChild(b);
+        } else if(part){ el.appendChild(document.createTextNode(part)); }
+      });
+    });
+  }
+  function renderPreview(){
+    var t = buildText(), el = $('preview');
+    if(t.trim()){ renderRich(el, t); el.classList.remove('empty'); }
+    else { el.textContent = 'Your message will appear here.'; el.classList.add('empty'); }
+  }
+  var draftTimer;
+  function saveDraftNow(){ clearTimeout(draftTimer); set('ord:draft', S); }
+  function persist(){
+    clearTimeout(draftTimer); draftTimer = setTimeout(saveDraftNow, 250);
+    renderPreview();
+  }
+  document.addEventListener('visibilitychange', function(){ if(document.visibilityState === 'hidden') saveDraftNow(); });
+  window.addEventListener('pagehide', saveDraftNow);
+
+  // ---------- order lines ----------
+  function renderLines(){
+    var box = $('lines'); box.innerHTML = '';
+    S.lines.forEach(function(l, i){
+      var row = document.createElement('div'); row.className = 'row';
+      var item = document.createElement('input');
+      item.setAttribute('list','itemList'); item.placeholder = 'Item'; item.value = l.item;
+      item.setAttribute('aria-label','Item ' + (i+1)); item.autocomplete = 'off';
+      var qty = document.createElement('input');
+      qty.type = 'number'; qty.inputMode = 'numeric'; qty.min = '0'; qty.placeholder = 'Qty'; qty.value = l.qty;
+      qty.setAttribute('aria-label','Quantity ' + (i+1));
+      var price = document.createElement('input');
+      price.type = 'number'; price.inputMode = 'decimal'; price.min = '0'; price.placeholder = 'Price'; price.value = l.price;
+      price.setAttribute('aria-label','Price ' + (i+1));
+      var rm = document.createElement('button');
+      rm.type = 'button'; rm.className = 'icon'; rm.textContent = '\u00D7'; rm.setAttribute('aria-label','Remove item ' + (i+1));
+
+      item.addEventListener('input', function(){
+        l.item = item.value;
+        var key = l.item.trim().toLowerCase();
+        var m = key && items.find(function(x){ return x.name.toLowerCase() === key; });
+        if(m && !String(l.price).trim() && m.price){ l.price = m.price; price.value = m.price; }
+        persist();
+      });
+      qty.addEventListener('input', function(){ l.qty = qty.value; persist(); });
+      price.addEventListener('input', function(){ l.price = price.value; persist(); });
+      rm.addEventListener('click', function(){
+        S.lines = S.lines.filter(function(x){ return x.id !== l.id; });
+        if(!S.lines.length) S.lines.push(blankLine());
+        renderLines(); persist();
+      });
+      row.append(item, qty, price, rm);
+      box.appendChild(row);
+    });
+  }
+  function addLine(focus){
+    S.lines.push(blankLine()); renderLines(); persist();
+    if(focus){ var rows = $('lines').querySelectorAll('.row'); rows[rows.length-1].querySelector('input').focus(); }
+  }
+
+  // ---------- saved retailers and items ----------
+  function chip(label, onUse, onDel){
+    var c = document.createElement('span'); c.className = 'chip';
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'use'; b.textContent = label; b.addEventListener('click', onUse);
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'x'; x.textContent = '\u00D7';
+    x.setAttribute('aria-label','Delete ' + label); x.addEventListener('click', onDel);
+    c.append(b, x); return c;
+  }
+  function note(box, text){ var s = document.createElement('span'); s.textContent = text; box.appendChild(s); }
+
+  function renderRetailers(){
+    var q = $('retSearch').value.trim().toLowerCase(), box = $('retailerChips');
+    box.innerHTML = '';
+    $('retCount').textContent = retailers.length ? '(' + retailers.length + ' saved)' : '';
+    if(!retailers.length){ note(box, 'None yet. Add many at once below, or they save when you send an order.'); return; }
+    var list = retailers.filter(function(r){ return !q || r.toLowerCase().indexOf(q) > -1; });
+    if(!list.length){ note(box, 'No match.'); return; }
+    list.slice(0, CHIP_LIMIT).forEach(function(r){
+      box.appendChild(chip(r,
+        function(){ S.retailer = r; $('retailer').value = r; persist(); toast('Retailer selected'); },
+        function(){ retailers = retailers.filter(function(x){ return x !== r; }); set('ord:retailers', retailers); renderSaved(); }));
+    });
+    if(list.length > CHIP_LIMIT) note(box, '+ ' + (list.length - CHIP_LIMIT) + ' more. Type to narrow down.');
+  }
+  function renderItems(){
+    var q = $('itemSearch').value.trim().toLowerCase(), box = $('itemChips');
+    box.innerHTML = '';
+    $('itemCount').textContent = items.length ? '(' + items.length + ' saved)' : '';
+    if(!items.length){ note(box, 'None yet. Add many at once below, or they save when you send an order.'); return; }
+    var list = items.filter(function(i){ return !q || i.name.toLowerCase().indexOf(q) > -1; })
+                    .sort(function(a, b){ return a.name.localeCompare(b.name); });
+    if(!list.length){ note(box, 'No match.'); return; }
+    list.slice(0, CHIP_LIMIT).forEach(function(it){
+      var lab = it.name + (it.price ? '  \u20B9' + it.price : '');
+      box.appendChild(chip(lab,
+        function(){
+          var empty = S.lines.find(function(l){ return !l.item.trim(); });
+          if(empty){ empty.item = it.name; empty.price = it.price || ''; }
+          else S.lines.push({id:uid(), item:it.name, qty:'', price:it.price || ''});
+          renderLines(); persist(); toast('Item added to order');
+        },
+        function(){ items = items.filter(function(x){ return x.name !== it.name; }); set('ord:items', items); renderSaved(); }));
+    });
+    if(list.length > CHIP_LIMIT) note(box, '+ ' + (list.length - CHIP_LIMIT) + ' more. Type to narrow down.');
+  }
+  function renderSaved(){
+    var rl = $('retailerList'); rl.innerHTML = '';
+    retailers.forEach(function(r){ var o = document.createElement('option'); o.value = r; rl.appendChild(o); });
+    var il = $('itemList'); il.innerHTML = '';
+    items.forEach(function(i){ var o = document.createElement('option'); o.value = i.name; il.appendChild(o); });
+    renderRetailers(); renderItems();
+  }
+  function findItem(name){
+    var k = name.toLowerCase();
+    return items.find(function(x){ return x.name.toLowerCase() === k; });
+  }
+  function hasRetailer(name){
+    var k = name.toLowerCase();
+    return retailers.some(function(x){ return x.toLowerCase() === k; });
+  }
+  function bulkAdd(){
+    var addedR = 0, addedI = 0;
+    $('bulkRet').value.split('\n').forEach(function(line){
+      var r = line.trim(); if(!r || hasRetailer(r)) return;
+      retailers.push(r); addedR++;
+    });
+    $('bulkItems').value.split('\n').forEach(function(line){
+      line = line.trim(); if(!line) return;
+      var name = line, price = '';
+      var m = line.match(/^(.*?)[\t,]\s*(\d[\d.,]*)\s*$/);
+      if(m){ name = m[1].trim(); price = m[2].replace(/,/g, ''); }
+      if(!name) return;
+      var ex = findItem(name);
+      if(ex){ if(price) ex.price = price; }
+      else { items.push({name:name, price:price}); addedI++; }
+    });
+    set('ord:retailers', retailers); set('ord:items', items);
+    $('bulkRet').value = ''; $('bulkItems').value = '';
+    renderSaved();
+    toast('Added ' + addedR + ' retailers and ' + addedI + ' items');
+  }
+  function rememberOrder(){
+    var r = S.retailer.trim();
+    if(r){
+      var k = r.toLowerCase();
+      retailers = retailers.filter(function(x){ return x.toLowerCase() !== k; });
+      retailers.unshift(r);   // most recently used first
+      set('ord:retailers', retailers);
+    }
+    S.lines.forEach(function(l){
+      var n = l.item.trim(); if(!n) return;
+      var p = String(l.price).trim(), m = findItem(n);
+      if(m){ if(p) m.price = p; } else items.push({name:n, price:p});
+    });
+    set('ord:items', items);
+    var snapshot = {
+      retailer: r, notes: S.notes, showTotals: !!S.showTotals,
+      lines: S.lines.filter(function(l){ return l.item.trim(); }).map(function(l){ return {item:l.item, qty:l.qty, price:l.price}; })
+    };
+    hPut({id: Date.now().toString(36) + uid(), at: Date.now(), retailer: r, order: snapshot})
+      .then(function(){ histLimit = HIST_PAGE; renderHistory(); });
+    renderSaved();
+  }
+
+  // ---------- history ----------
+  function renderHistory(){
+    var h = $('history');
+    hCount().then(function(n){ $('histCount').textContent = n ? '(' + n + ' saved)' : ''; });
+    hQuery($('histSearch').value, histLimit).then(function(r){
+      h.innerHTML = '';
+      $('histMore').hidden = !r.more;
+      if(!r.items.length){
+        h.textContent = $('histSearch').value.trim() ? 'No matching orders.' : 'No orders yet.';
+        h.style.color = 'var(--muted)'; return;
+      }
+      h.style.color = '';
+      r.items.forEach(function(e){
+        var d = document.createElement('div'); d.className = 'hist';
+        var left = document.createElement('div');
+        var t = document.createElement('div'); t.textContent = e.retailer || '(no retailer)';
+        var s = document.createElement('small');
+        var cnt = e.order.lines.length;
+        s.textContent = new Date(e.at).toLocaleString('en-IN', {day:'numeric', month:'short', year:'numeric', hour:'numeric', minute:'2-digit'}) + ' \u00B7 ' + cnt + ' item' + (cnt === 1 ? '' : 's');
+        left.append(t, s);
+        var btns = document.createElement('div'); btns.className = 'btns';
+        var use = document.createElement('button'); use.type = 'button'; use.textContent = 'Reuse';
+        use.addEventListener('click', function(){
+          S = JSON.parse(JSON.stringify(e.order));
+          S.lines = S.lines.map(function(l){ return {id:uid(), item:l.item, qty:l.qty, price:l.price}; });
+          if(!S.lines.length) S.lines = [blankLine()];
+          loadFields(); renderLines(); persist(); saveDraftNow(); toast('Order loaded');
+          window.scrollTo({top:0, behavior:'smooth'});
+        });
+        var del = document.createElement('button'); del.type = 'button'; del.textContent = 'Delete';
+        del.addEventListener('click', function(){ hDelete(e.id).then(renderHistory); });
+        btns.append(use, del); d.append(left, btns); h.appendChild(d);
+      });
+    });
+  }
+
+  // ---------- actions ----------
+  var toastTimer;
+  function toast(msg){
+    var t = $('toast'); t.textContent = msg; t.classList.add('on');
+    clearTimeout(toastTimer); toastTimer = setTimeout(function(){ t.classList.remove('on'); }, 2400);
+  }
+  function legacyCopy(text){
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.setAttribute('readonly', '');
+    ta.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;font-size:16px';
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    try { ta.setSelectionRange(0, text.length); } catch(e){}
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch(e){}
+    document.body.removeChild(ta);
+    return ok;
+  }
+  function copyText(text){
+    return new Promise(function(res, rej){
+      function fallback(){ legacyCopy(text) ? res() : rej(); }
+      if(navigator.clipboard && window.isSecureContext){ navigator.clipboard.writeText(text).then(res, fallback); }
+      else fallback();
+    });
+  }
+  // Last resort when the phone blocks automatic copying: show the text to copy by hand.
+  function showManual(text){
+    $('manualText').value = text;
+    $('manual').hidden = false;
+    $('manualText').focus(); $('manualText').select();
+  }
+  function ready(){
+    if(!hasContent()){ toast('Add a retailer or at least one item first'); return false; }
+    return true;
+  }
+  function send(){
+    if(!ready()) return;
+    var text = buildText(); rememberOrder();
+    window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank', 'noopener');
+  }
+  function copy(){
+    if(!ready()) return;
+    var text = buildText();
+    copyText(text).then(function(){ rememberOrder(); toast('Message copied'); }, function(){ rememberOrder(); showManual(text); });
+  }
+  function copyAndOpenGroup(){
+    if(!ready()) return;
+    var link = $('groupLink').value.trim();
+    var text = buildText();
+    copyText(text).then(function(){
+      rememberOrder(); toast('Copied. Paste it in the group.');
+      window.open(link, '_blank', 'noopener');
+    }, function(){ showManual(text); });
+  }
+  function loadFields(){
+    $('retailer').value = S.retailer; $('notes').value = S.notes; $('showTotals').checked = !!S.showTotals;
+  }
+  function updateGroupBtn(){
+    $('groupBtn').hidden = !/^https:\/\/chat\.whatsapp\.com\//i.test($('groupLink').value.trim());
+  }
+
+  // ---------- wire up ----------
+  $('retailer').addEventListener('input', function(e){ S.retailer = e.target.value; persist(); });
+  $('notes').addEventListener('input', function(e){ S.notes = e.target.value; persist(); });
+  $('showTotals').addEventListener('change', function(e){ S.showTotals = e.target.checked; persist(); });
+  $('sentBy').addEventListener('input', function(e){ set('ord:sentby', e.target.value); renderPreview(); });
+  $('groupLink').addEventListener('input', function(e){ set('ord:group', e.target.value); updateGroupBtn(); });
+  $('addLine').addEventListener('click', function(){ addLine(true); });
+  ['sendBtn','sendBtn2'].forEach(function(id){ $(id).addEventListener('click', send); });
+  ['copyBtn','copyBtn2'].forEach(function(id){ $(id).addEventListener('click', copy); });
+  $('groupBtn').addEventListener('click', copyAndOpenGroup);
+  $('newBtn').addEventListener('click', function(){
+    if(hasContent() && !confirm('Clear the current order and start a new one?')) return;
+    S = blankOrder(); loadFields(); renderLines(); persist(); saveDraftNow(); toast('New order started');
+  });
+  $('retSearch').addEventListener('input', renderRetailers);
+  $('itemSearch').addEventListener('input', renderItems);
+  $('editMode').addEventListener('change', function(e){ $('savedCard').classList.toggle('editing', e.target.checked); });
+  $('bulkBtn').addEventListener('click', bulkAdd);
+  $('manualSel').addEventListener('click', function(){ $('manualText').focus(); $('manualText').select(); });
+  $('manualClose').addEventListener('click', function(){ $('manual').hidden = true; });
+  var histTimer;
+  $('histSearch').addEventListener('input', function(){ clearTimeout(histTimer); histLimit = HIST_PAGE; histTimer = setTimeout(renderHistory, 200); });
+  $('histMore').addEventListener('click', function(){ histLimit += HIST_PAGE; renderHistory(); });
+  $('histTrim').addEventListener('click', function(){
+    if(!confirm('Delete all orders older than 12 months? This cannot be undone.')) return;
+    hTrimOlder(365 * 24 * 3600 * 1000).then(function(n){ toast(n + ' old orders deleted'); renderHistory(); });
+  });
+
+  $('exportBtn').addEventListener('click', function(){
+    hAll().then(function(all){
+      var data = {history: all};
+      SETTING_KEYS.forEach(function(k){ data[k] = get(k, null); });
+      var blob = new Blob([JSON.stringify(data)], {type:'application/json'});
+      var a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+      a.download = 'order-backup-' + new Date().toISOString().slice(0,10) + '.json';
+      document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1000);
+    });
+  });
+  $('importBtn').addEventListener('click', function(){ $('importFile').click(); });
+  $('importFile').addEventListener('change', function(e){
+    var f = e.target.files[0]; if(!f) return;
+    var r = new FileReader();
+    r.onload = function(){
+      var data;
+      try { data = JSON.parse(r.result); } catch(err){ toast('That file is not a valid backup'); return; }
+      SETTING_KEYS.forEach(function(k){ if(data[k] !== null && data[k] !== undefined) set(k, data[k]); });
+      var list = Array.isArray(data.history) ? data.history : (Array.isArray(data['ord:history']) ? data['ord:history'] : []);
+      Promise.all(list.filter(function(x){ return x && x.id && x.at && x.order && x.order.lines; }).map(hPut))
+        .then(function(){ location.reload(); });
+    };
+    r.readAsText(f); e.target.value = '';
+  });
+
+  // ---------- install on home screen ----------
+  var deferredPrompt = null;
+  var standalone = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
+  var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  function hideInstall(){ $('installBox').hidden = true; }
+  if(!standalone){
+    window.addEventListener('beforeinstallprompt', function(e){
+      e.preventDefault(); deferredPrompt = e;
+      $('installText').textContent = 'Install this app on your home screen to open it like any other app.';
+      $('installBtn').hidden = false; $('installBox').hidden = false;
+    });
+    window.addEventListener('appinstalled', function(){ hideInstall(); toast('App installed'); });
+    if(isIOS){
+      $('installText').textContent = 'To install: tap the Share button in Safari, then choose Add to Home Screen.';
+      $('installBox').hidden = false;
+    }
+  }
+  $('installBtn').addEventListener('click', function(){
+    if(!deferredPrompt) return;
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(function(){ deferredPrompt = null; hideInstall(); });
+  });
+  if('serviceWorker' in navigator && /^https?:$/.test(location.protocol)){
+    window.addEventListener('load', function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); });
+  }
+  // Ask the browser not to clear saved data when the phone is low on space.
+  if(navigator.storage && navigator.storage.persist){ navigator.storage.persist().catch(function(){}); }
+
+  // ---------- init ----------
+  $('sentBy').value = get('ord:sentby', '');
+  $('groupLink').value = get('ord:group', '');
+  if(!storageOk) $('storageWarn').hidden = false;
+  loadFields(); renderLines(); renderSaved(); updateGroupBtn(); renderPreview();
+
+  openDB().then(function(d){
+    db = d;
+    // move history from the earlier version (kept in simple storage) into the database
+    var old = get('ord:history', null);
+    if(Array.isArray(old) && old.length){
+      var moves = old.map(function(e){
+        var lines = (e.order && e.order.lines || []).filter(function(l){ return l.item && l.item.trim(); })
+          .map(function(l){ return {item:l.item, qty:l.qty, price:l.price}; });
+        return hPut({id:e.id || uid(), at:e.at || Date.now(), retailer:e.retailer || '', order:{retailer:e.retailer || '', notes:(e.order && e.order.notes) || '', showTotals:!!(e.order && e.order.showTotals), lines:lines}});
+      });
+      Promise.all(moves).then(function(){ try { localStorage.removeItem('ord:history'); } catch(x){} renderHistory(); });
+    }
+    renderHistory();
+  });
+})();
+</script>
+</body>
+</html>
