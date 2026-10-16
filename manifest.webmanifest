@@ -1,7 +1,7 @@
 {
   "id": "./",
-  "name": "Order to WhatsApp",
-  "short_name": "Orders",
+  "name": "GOrder to WhatsApp",
+  "short_name": "GOrders",
   "description": "Create retailer orders and send them to a WhatsApp group.",
   "start_url": "./",
   "scope": "./",
