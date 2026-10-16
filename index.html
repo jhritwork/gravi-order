@@ -5,6 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Order to WhatsApp</title>
 <meta name="theme-color" content="#16233B">
+<script src="access.js"></script>
+<script>
+  // Lock the page until the access password has been entered on this phone.
+  try {
+    var A = window.ACCESS, a = JSON.parse(localStorage.getItem('ord:auth') || 'null');
+    if(!A || !a || a.v !== A.v) document.documentElement.className = 'gate';
+  } catch(e){ document.documentElement.className = 'gate'; }
+</script>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -152,10 +160,36 @@
   .toast.on{opacity:1}
   .installbox{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
   .installbox p{margin:0;font-size:.92rem;flex:1;min-width:200px}
+  /* access lock */
+  .lock{display:none;position:fixed;inset:0;z-index:100;background:var(--bg);align-items:center;justify-content:center;padding:16px;overflow:auto}
+  html.gate .lock{display:flex}
+  html.gate header, html.gate main, html.gate .bar, html.gate .drawerwrap, html.gate .sheetwrap, html.gate .overlay, html.gate .toast{display:none!important}
+  .lockcard{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:24px 20px;width:100%;max-width:380px;text-align:center}
+  .lockcard img{width:72px;height:72px;border-radius:16px}
+  .lockcard h1{font-size:1.25rem;margin:12px 0 4px}
+  .lockcard p{margin:0 0 12px;color:var(--muted);font-size:.95rem}
+  .lockcard label{text-align:left}
+  .lockcard .check{justify-content:flex-start}
+  .lockcard .primary{width:100%;margin-top:14px}
+  .lockcard .warn{text-align:left;margin-top:10px}
   @media(prefers-reduced-motion:reduce){.toast,.drawer{transition:none}}
 </style>
 </head>
 <body class="with-bar">
+
+<div class="lock" id="lock" role="dialog" aria-modal="true" aria-labelledby="lockT">
+  <form class="lockcard" id="lockForm">
+    <img src="icon-192.png" alt="">
+    <h1 id="lockT">Order to WhatsApp</h1>
+    <p>Enter the access password to continue.</p>
+    <label for="lockPw">Password</label>
+    <input id="lockPw" type="password" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="go">
+    <div class="check"><input type="checkbox" id="lockShow"><label for="lockShow">Show password</label></div>
+    <p class="warn" id="lockErr" role="alert" hidden></p>
+    <button type="submit" class="primary" id="lockBtn">Unlock</button>
+    <p class="hint" style="margin-top:12px">Ask the owner if you don't have the password. You only need to enter it once on this phone.</p>
+  </form>
+</div>
 
 <header class="appbar">
   <div class="inner">
@@ -292,7 +326,7 @@
     </div>
   </section>
 
-  <section class="card">
+  <section class="card" id="cfgCard">
     <div class="cardhead"><h2>Master list links</h2></div>
     <p class="hint" style="margin-top:0">Set by the owner. If these are already filled in, leave them as they are.</p>
     <div class="field">
@@ -304,6 +338,12 @@
       <input id="cfgI" inputmode="url" placeholder="https://docs.google.com/…output=csv" autocomplete="off">
     </div>
     <div class="actions"><button type="button" class="primary" id="cfgSave">Save and update list</button></div>
+  </section>
+
+  <section class="card">
+    <div class="cardhead"><h2>Access</h2></div>
+    <p class="hint" style="margin-top:0">This phone stays unlocked until the owner changes the password.</p>
+    <div class="actions"><button type="button" id="lockNow">Lock the app on this phone</button></div>
   </section>
 
   <section class="card">
@@ -380,9 +420,9 @@
   const el = (tag, cls) => { const e = document.createElement(tag); if(cls) e.className = cls; return e; };
 
   // ======== OWNER SETTINGS ========
-  // Paste the two published Google Sheet links here so every user gets them automatically.
-  const DEFAULT_RETAILERS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vREnKAJtl7-Bxqfz25K_pBYgPvBjblY56JaPU6vkg8rrJKI61hwPf2hdXzg4vMgWcAOk0e4qeHVV8RM/pub?gid=0&single=true&output=csv';
-  const DEFAULT_ITEMS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vREnKAJtl7-Bxqfz25K_pBYgPvBjblY56JaPU6vkg8rrJKI61hwPf2hdXzg4vMgWcAOk0e4qeHVV8RM/pub?gid=722300154&single=true&output=csv';
+  // The sheet links are not written here. They are stored encrypted in access.js and unlocked by the password.
+  const DEFAULT_RETAILERS_URL = '';
+  const DEFAULT_ITEMS_URL = '';
   const SYNC_MAX_AGE = 12 * 3600 * 1000;   // refresh on open if the saved list is older than this
   const HIST_PAGE = 20;
 
@@ -915,6 +955,11 @@
       });
   }
   const cfg = () => {
+    if(window.ACCESS){
+      const a = get('ord:auth', null);
+      if(a && a.v === window.ACCESS.v && a.cfg) return {r:String(a.cfg.r || '').trim(), i:String(a.cfg.i || '').trim()};
+      return {r:'', i:''};
+    }
     const s = get('ord:cfg', {}) || {};
     return {r:String(s.r || DEFAULT_RETAILERS_URL).trim(), i:String(s.i || DEFAULT_ITEMS_URL).trim()};
   };
@@ -1123,11 +1168,56 @@
   window.addEventListener('online', () => { setPill(); maybeSync(); });
   window.addEventListener('offline', setPill);
 
+  // ======== access password ========
+  // <crypto>
+  const b64d = t => Uint8Array.from(atob(t), c => c.charCodeAt(0));
+  async function deriveKey(pw, salt, iter, usages){
+    const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveKey']);
+    return crypto.subtle.deriveKey({name:'PBKDF2', salt, iterations:iter, hash:'SHA-256'}, base, {name:'AES-GCM', length:256}, false, usages);
+  }
+  async function decryptConfig(pw, A){
+    const key = await deriveKey(pw, b64d(A.salt), A.iter, ['decrypt']);
+    const pt = await crypto.subtle.decrypt({name:'AES-GCM', iv:b64d(A.iv)}, key, b64d(A.ct));
+    return JSON.parse(new TextDecoder().decode(pt));
+  }
+  // </crypto>
+  function lockErr(msg){ const e = $('lockErr'); e.textContent = msg; e.hidden = !msg; }
+  function lockNow(){
+    set('ord:auth', null);
+    closeDrawer();
+    document.documentElement.className = 'gate';
+    $('lockPw').value = ''; lockErr(''); setPill();
+  }
+  $('lockShow').addEventListener('change', e => { $('lockPw').type = e.target.checked ? 'text' : 'password'; });
+  $('lockNow').addEventListener('click', lockNow);
+  $('lockForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const pw = $('lockPw').value.trim(), A = window.ACCESS;
+    if(!pw) return;
+    if(!A || !A.ct){ lockErr('Could not load the access settings. Check your internet connection and reload the page.'); return; }
+    if(!(window.crypto && crypto.subtle)){ lockErr('This page must be opened from its secure web address (https).'); return; }
+    $('lockBtn').disabled = true; $('lockBtn').textContent = 'Checking\u2026'; lockErr('');
+    try {
+      const c = await decryptConfig(pw, A);
+      set('ord:auth', {v:A.v, cfg:{r:c.r || '', i:c.i || ''}});
+      document.documentElement.className = '';
+      $('lockPw').value = ''; $('lockShow').checked = false; $('lockPw').type = 'password';
+      setPill(); showView('order'); toast('Unlocked');
+      syncLists(false);
+    } catch(err){
+      lockErr(err && err.name === 'OperationError' ? 'That password is not correct. Please try again.' : 'Could not check the password. Please try again.');
+      $('lockPw').select();
+    }
+    $('lockBtn').disabled = false; $('lockBtn').textContent = 'Unlock';
+  });
+
   // ======== init ========
   $('sentBy').value = get('ord:sentby', '');
   $('groupLink').value = get('ord:group', '');
   $('notes').value = S.notes; $('showTotals').checked = S.showTotals;
   if(!storageOk) $('storageWarn').hidden = false;
+  $('cfgCard').hidden = !!window.ACCESS;
+  if(document.documentElement.classList.contains('gate') && !window.ACCESS) lockErr('Could not load the access settings. Check your internet connection and reload the page.');
   updateGroupBtn(); renderRetailer(); renderLines(); renderPreview(); setPill(); showView('order');
   maybeSync();
 
