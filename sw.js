@@ -1,5 +1,5 @@
 // Keeps the app available offline. Online, it always tries the network first so updates arrive.
-const CACHE = 'order-app-v2';
+const CACHE = 'order-app-v6';
 const CORE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
